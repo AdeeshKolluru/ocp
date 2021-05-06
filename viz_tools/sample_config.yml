@@ -1,5 +1,7 @@
 model:
   name: DimeNetPlusPlus
+  num_atoms: None
+  bond_feat_dim: None
   hidden_channels: 192
   out_emb_channels: 192
   num_blocks: 3
@@ -9,6 +11,7 @@ model:
   num_before_skip: 1
   num_after_skip: 2
   num_output_layers: 3
+  num_targets: 3
   regress_forces: True
   use_pbc: True
 
@@ -16,4 +19,4 @@ dataset:
   src: /home/jovyan/ocp_code/ocp-dev/data/is2re/all/train/data.lmdb
 
 checkpoint:
-  src: /home/jovyan/ocp_code/ocp-dev/data/pretrained/s2ef/dimenetpp_all_forceonly.pt
+  src: /home/jovyan/ocp_code/ocp-dev/data/pretrained/is2rs_direct/dpp_all.pt

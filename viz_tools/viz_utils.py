@@ -1,5 +1,5 @@
 import os
-
+from ase.constraints import FixAtoms
 import ase
 import matplotlib
 import matplotlib.pyplot as plt
@@ -25,13 +25,13 @@ params = {
 matplotlib.rcParams.update(params)
 
 
-def create_is2rs_plots(predictions, results_dir):
+def create_is2rs_plots(batch, output, results_dir=os.getcwd()):
     viz_path = os.path.join(results_dir, "visuals")
     os.makedirs(viz_path, exist_ok=True)
-    atom_sets = create_atoms(predictions)
+    atom_sets = batch_to_atoms(batch, output)
 
     for idx, system in enumerate(atom_sets):
-        randomid = predictions["id"][idx]
+        randomid = batch.sid[idx]
         fig, ax = plt.subplots(1, 3)
         labels = ["initial", "predicted", "relaxed"]
         for i in range(3):
@@ -50,6 +50,48 @@ def create_is2rs_plots(predictions, results_dir):
         fig.tight_layout()
         fig.savefig(f"{viz_path}/{randomid}_is2rs.png")
 
+def batch_to_atoms(batch, output):
+    n_systems = batch.sid.shape[0]
+    natoms = batch.natoms.tolist()
+    numbers = torch.split(batch.atomic_numbers, natoms)
+    fixed = torch.split(batch.fixed, natoms)
+    forces = torch.split(batch.force, natoms)
+    positions = torch.split(batch.pos, natoms)
+    target_positions = torch.split(batch.pos_relaxed, natoms)
+    output_positions = torch.split(output, natoms)
+    tags = torch.split(batch.tags, natoms)
+    cells = batch.cell
+
+    atoms_objects = []
+    for idx in range(n_systems):
+        initial_atoms = Atoms(
+            numbers=numbers[idx].tolist(),
+            positions=positions[idx].cpu().detach().numpy(),
+            tags=tags[idx].tolist(),
+            cell=cells[idx].cpu().detach().numpy(),
+            constraint=FixAtoms(mask=fixed[idx].tolist()),
+            pbc=[True, True, True],
+        )
+        pred_atoms = Atoms(
+            numbers=numbers[idx].tolist(),
+            positions=output_positions[idx].cpu().detach().numpy()+positions[idx].cpu().detach().numpy(),
+            tags=tags[idx].tolist(),
+            cell=cells[idx].cpu().detach().numpy(),
+            constraint=FixAtoms(mask=fixed[idx].tolist()),
+            pbc=[True, True, True],
+        )
+        relaxed_atoms = Atoms(
+            numbers=numbers[idx].tolist(),
+            positions=target_positions[idx].cpu().detach().numpy(),
+            tags=tags[idx].tolist(),
+            cell=cells[idx].cpu().detach().numpy(),
+            constraint=FixAtoms(mask=fixed[idx].tolist()),
+            pbc=[True, True, True],
+        )
+ 
+    atoms_objects.append([initial_atoms, pred_atoms, relaxed_atoms])
+
+    return atoms_objects
 
 def create_atoms(predictions):
     system = []
