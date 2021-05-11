@@ -12,11 +12,20 @@ model:
   num_after_skip: 2
   num_output_layers: 3
   num_targets: 3
-  regress_forces: True
+  regress_forces: False
+  regress_position: True
   use_pbc: True
 
 dataset:
   src: /home/jovyan/ocp_code/ocp-dev/data/is2re/all/train/data.lmdb
+  traj: atoms.traj
 
 checkpoint:
   src: /home/jovyan/ocp_code/ocp-dev/data/pretrained/is2rs_direct/dpp_all.pt
+
+task:
+  computation_graph: False
+  t-sne_viz: True
+  pca_t-sne_viz: True
+  raw_weights: True
+  is2rs_plot: True
